@@ -12,7 +12,7 @@ class TestTextNode(unittest.TestCase):
         
         self.assertEqual(
             node.props_to_html(),
-            "href=\"https://www.google.com\" target=\"_blank\""
+            " href=\"https://www.google.com\" target=\"_blank\""
         )
     
     def test_props_empty(self):
