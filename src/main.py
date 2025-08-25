@@ -1,6 +1,8 @@
 import os
 import shutil
 
+from generate import generate_pages_recursive
+
 def remove_contents(path):
     # Everything is already removed
     if not os.path.exists(path):
@@ -28,13 +30,12 @@ def copy_contents(source, destination):
             shutil.copy(source_path, destination)
         elif os.path.isdir(source_path):
             copy_contents(source_path, destination_path)
-
-def update_contents(source="static", destination="public"):
-    remove_contents(destination)
-    copy_contents(source, destination)
         
 def main():
-    update_contents()
+    remove_contents("public")
+    copy_contents("static", "public")
+    generate_pages_recursive("content", "template.html", "public")
+
 
 if __name__ == "__main__":
     main()

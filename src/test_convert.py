@@ -176,65 +176,107 @@ class TestBlockNodeToHTMLNode(unittest.TestCase):
     def test_paragraph(self):
         node = BlockNode("This is a paragraph.", BlockType.PARAGRAPH)
         html_node = block_node_to_html_node(node)
+
+        def get_text(n):
+            if hasattr(n, "children") and n.children:
+                return "".join(get_text(c) for c in n.children)
+            return getattr(n, "value", "")
+
         self.assertEqual(html_node.tag, "p")
-        self.assertEqual(html_node.value, "This is a paragraph.")
+        self.assertEqual(get_text(html_node), "This is a paragraph.")
 
     def test_headings(self):
-        node1 = BlockNode("# Heading 1", BlockType.HEADING)
-        node2 = BlockNode("## Heading 2", BlockType.HEADING)
-        node3 = BlockNode("### Heading 3", BlockType.HEADING)
-        self.assertEqual(block_node_to_html_node(node1).tag, "h1")
-        self.assertEqual(block_node_to_html_node(node1).value, "Heading 1")
-        self.assertEqual(block_node_to_html_node(node2).tag, "h2")
-        self.assertEqual(block_node_to_html_node(node2).value, "Heading 2")
-        self.assertEqual(block_node_to_html_node(node3).tag, "h3")
-        self.assertEqual(block_node_to_html_node(node3).value, "Heading 3")
+        nodes = [
+            BlockNode("# Heading 1", BlockType.HEADING),
+            BlockNode("## Heading 2", BlockType.HEADING),
+            BlockNode("### Heading 3", BlockType.HEADING)
+        ]
+
+        def get_text(n):
+            if hasattr(n, "children") and n.children:
+                return "".join(get_text(c) for c in n.children)
+            return getattr(n, "value", "")
+
+        expected = ["Heading 1", "Heading 2", "Heading 3"]
+        tags = ["h1", "h2", "h3"]
+
+        for node, exp_tag, exp_text in zip(nodes, tags, expected):
+            html_node = block_node_to_html_node(node)
+            self.assertEqual(html_node.tag, exp_tag)
+            self.assertEqual(get_text(html_node), exp_text)
 
     def test_code_block(self):
         code_text = "```\nprint('Hello')\nprint('World')\n```"
         node = BlockNode(code_text, BlockType.CODE)
         html_node = block_node_to_html_node(node)
+        code_child = html_node.children[0]
+
+        def get_text(n):
+            if hasattr(n, "children") and n.children:
+                return "".join(get_text(c) for c in n.children)
+            return getattr(n, "value", "")
+
         self.assertEqual(html_node.tag, "pre")
         self.assertEqual(len(html_node.children), 1)
-        self.assertEqual(html_node.children[0].tag, "code")
-        self.assertIn("print('Hello')", html_node.children[0].value)
-        self.assertIn("print('World')", html_node.children[0].value)
+        self.assertEqual(code_child.tag, "code")
+        code_text_content = get_text(code_child)
+        self.assertIn("print('Hello')", code_text_content)
+        self.assertIn("print('World')", code_text_content)
 
     def test_blockquote(self):
         quote_text = "> First line\n> Second line\n> Third line"
         node = BlockNode(quote_text, BlockType.QUOTE)
         html_node = block_node_to_html_node(node)
+
+        def get_text(n):
+            if hasattr(n, "children") and n.children:
+                return "".join(get_text(c) for c in n.children)
+            return getattr(n, "value", "")
+
         self.assertEqual(html_node.tag, "blockquote")
         self.assertEqual(len(html_node.children), 3)
-        self.assertEqual(html_node.children[0].value, "First line")
-        self.assertEqual(html_node.children[1].value, "Second line")
-        self.assertEqual(html_node.children[2].value, "Third line")
+        self.assertEqual(get_text(html_node.children[0]), "First line")
+        self.assertEqual(get_text(html_node.children[1]), "Second line")
+        self.assertEqual(get_text(html_node.children[2]), "Third line")
 
     def test_unordered_list(self):
         ul_text = "- Item 1\n- Item 2\n- Item 3"
         node = BlockNode(ul_text, BlockType.UNORDERED_LIST)
         html_node = block_node_to_html_node(node)
+
+        def get_text(n):
+            if hasattr(n, "children") and n.children:
+                return "".join(get_text(c) for c in n.children)
+            return getattr(n, "value", "")
+
         self.assertEqual(html_node.tag, "ul")
         self.assertEqual(len(html_node.children), 3)
-        self.assertEqual(html_node.children[0].value, "Item 1")
-        self.assertEqual(html_node.children[1].value, "Item 2")
-        self.assertEqual(html_node.children[2].value, "Item 3")
+        self.assertEqual(get_text(html_node.children[0]), "Item 1")
+        self.assertEqual(get_text(html_node.children[1]), "Item 2")
+        self.assertEqual(get_text(html_node.children[2]), "Item 3")
 
     def test_ordered_list(self):
         ol_text = "1. First\n2. Second\n3. Third"
         node = BlockNode(ol_text, BlockType.ORDERED_LIST)
         html_node = block_node_to_html_node(node)
+
+        def get_text(n):
+            if hasattr(n, "children") and n.children:
+                return "".join(get_text(c) for c in n.children)
+            return getattr(n, "value", "")
+
         self.assertEqual(html_node.tag, "ol")
         self.assertEqual(len(html_node.children), 3)
-        self.assertEqual(html_node.children[0].value, "First")
-        self.assertEqual(html_node.children[1].value, "Second")
-        self.assertEqual(html_node.children[2].value, "Third")
+        self.assertEqual(get_text(html_node.children[0]), "First")
+        self.assertEqual(get_text(html_node.children[1]), "Second")
+        self.assertEqual(get_text(html_node.children[2]), "Third")
 
 
 class TestMarkdownToBlocks(unittest.TestCase):
     def test_paragraph(self):
         md = "This is a paragraph."
         blocks = markdown_to_blocks(md)
+        
         self.assertEqual(len(blocks), 1)
         self.assertEqual(blocks[0].block_type, BlockType.PARAGRAPH)
         self.assertEqual(blocks[0].text, "This is a paragraph.")
@@ -345,61 +387,66 @@ class TestMarkdownToHTMLNode(unittest.TestCase):
         1. And there are ordered lists
         2. That have numbers
         3. Like this one
-        
-        
-        
-        
         """
         
         html_root = markdown_to_html_node(markdown)
         html = html_root.children  # top-level nodes
 
+        # Helper to join all text from children
+        def get_text(node):
+            if hasattr(node, "children") and node.children:
+                return "".join(get_text(child) for child in node.children)
+            return getattr(node, "value", "")
+
         # Headings
         self.assertEqual(html[0].tag, "h1")
-        self.assertEqual(html[0].value, "Heading 1")
+        self.assertEqual(get_text(html[0]), "Heading 1")
         self.assertEqual(html[1].tag, "h2")
-        self.assertEqual(html[1].value, "Heading 2")
+        self.assertEqual(get_text(html[1]), "Heading 2")
         self.assertEqual(html[2].tag, "h3")
-        self.assertEqual(html[2].value, "Heading 3")
+        self.assertEqual(get_text(html[2]), "Heading 3")
 
         # Code block
         code_node = html[3]
         self.assertEqual(code_node.tag, "pre")
         self.assertEqual(len(code_node.children), 1)
         self.assertEqual(code_node.children[0].tag, "code")
-        self.assertIn("This is a code block", code_node.children[0].value)
-        self.assertIn("of code", code_node.children[0].value)
-        self.assertIn("and it contains multiple lines", code_node.children[0].value)
+        code_text = get_text(code_node.children[0])
+        self.assertIn("This is a code block", code_text)
+        self.assertIn("of code", code_text)
+        self.assertIn("and it contains multiple lines", code_text)
 
         # Blockquote
         blockquote_node = html[4]
         self.assertEqual(blockquote_node.tag, "blockquote")
         self.assertEqual(len(blockquote_node.children), 3)
-        self.assertEqual(blockquote_node.children[0].value, "We have quotes")
-        self.assertEqual(blockquote_node.children[1].value, "Many quotes")
-        self.assertEqual(blockquote_node.children[2].value, "So many quotes")
+        self.assertEqual(get_text(blockquote_node.children[0]), "We have quotes")
+        self.assertEqual(get_text(blockquote_node.children[1]), "Many quotes")
+        self.assertEqual(get_text(blockquote_node.children[2]), "So many quotes")
 
         # Paragraph
         paragraph_node = html[5]
         self.assertEqual(paragraph_node.tag, "p")
-        self.assertIn("And paragraphs that contain text", paragraph_node.value)
-        self.assertIn("And newlines", paragraph_node.value)
+        paragraph_text = get_text(paragraph_node)
+        self.assertIn("And paragraphs that contain text", paragraph_text)
+        self.assertIn("And newlines", paragraph_text)
 
         # Unordered list
         ul_node = html[6]
         self.assertEqual(ul_node.tag, "ul")
         self.assertEqual(len(ul_node.children), 3)
-        self.assertEqual(ul_node.children[0].value, "There are also lists")
-        self.assertEqual(ul_node.children[1].value, "That are unordered")
-        self.assertEqual(ul_node.children[2].value, "Like this one")
+        self.assertEqual(get_text(ul_node.children[0]), "There are also lists")
+        self.assertEqual(get_text(ul_node.children[1]), "That are unordered")
+        self.assertEqual(get_text(ul_node.children[2]), "Like this one")
 
         # Ordered list
         ol_node = html[7]
         self.assertEqual(ol_node.tag, "ol")
         self.assertEqual(len(ol_node.children), 3)
-        self.assertEqual(ol_node.children[0].value, "And there are ordered lists")
-        self.assertEqual(ol_node.children[1].value, "That have numbers")
-        self.assertEqual(ol_node.children[2].value, "Like this one")
+        self.assertEqual(get_text(ol_node.children[0]), "And there are ordered lists")
+        self.assertEqual(get_text(ol_node.children[1]), "That have numbers")
+        self.assertEqual(get_text(ol_node.children[2]), "Like this one")
+
 
 
 if __name__ == "__main__":

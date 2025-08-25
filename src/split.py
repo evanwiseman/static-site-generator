@@ -72,7 +72,7 @@ def split_nodes_image(old_nodes:List[TextNode]) -> List[TextNode]:
             
     return new_nodes
 
-def split_nodes_link(old_nodes:List[TextNode]) -> TextNode:
+def split_nodes_link(old_nodes:List[TextNode]) -> List[TextNode]:
     new_nodes = []
     for node in old_nodes:
         if not node:
