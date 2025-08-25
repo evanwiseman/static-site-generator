@@ -1,7 +1,7 @@
 import unittest
 
 from blocknode import BlockNode, BlockType
-from convert import text_node_to_html_node, text_to_text_nodes, markdown_to_html_node, block_node_to_html_node
+from convert import text_node_to_html_node, text_to_text_nodes, markdown_to_html_node, block_node_to_html_node, markdown_to_blocks
 from htmlnode import HTMLNode
 from leafnode import LeafNode
 from textnode import TextNode, TextType
@@ -229,6 +229,90 @@ class TestBlockNodeToHTMLNode(unittest.TestCase):
         self.assertEqual(html_node.children[0].value, "First")
         self.assertEqual(html_node.children[1].value, "Second")
         self.assertEqual(html_node.children[2].value, "Third")
+
+
+class TestMarkdownToBlocks(unittest.TestCase):
+    def test_paragraph(self):
+        md = "This is a paragraph."
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].block_type, BlockType.PARAGRAPH)
+        self.assertEqual(blocks[0].text, "This is a paragraph.")
+
+    def test_heading(self):
+        md = "# Heading 1\n\n## Heading 2"
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 2)
+        self.assertEqual(blocks[0].block_type, BlockType.HEADING)
+        self.assertEqual(blocks[0].text, "# Heading 1")
+        self.assertEqual(blocks[1].block_type, BlockType.HEADING)
+        self.assertEqual(blocks[1].text, "## Heading 2")
+
+    def test_code_block(self):
+        md = "```\ncode line 1\ncode line 2\n```"
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].block_type, BlockType.CODE)
+        self.assertIn("code line 1", blocks[0].text)
+        self.assertIn("code line 2", blocks[0].text)
+
+    def test_quote_block(self):
+        md = "> This is a quote\n> spanning multiple lines"
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].block_type, BlockType.QUOTE)
+        self.assertIn("spanning multiple lines", blocks[0].text)
+
+    def test_unordered_list(self):
+        md = "- Item 1\n- Item 2\n- Item 3"
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].block_type, BlockType.UNORDERED_LIST)
+        self.assertIn("Item 2", blocks[0].text)
+
+    def test_ordered_list(self):
+        md = "1. First\n2. Second\n3. Third"
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].block_type, BlockType.ORDERED_LIST)
+        self.assertIn("Second", blocks[0].text)
+    
+    def test_paragraph_with_inline_code(self):
+        md = "This is a paragraph with `inline code` inside."
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].block_type, BlockType.PARAGRAPH)
+        self.assertIn("`inline code`", blocks[0].text)
+
+    def test_paragraph_with_bold_italic(self):
+        md = "This has **bold** text and _italic_ text."
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].block_type, BlockType.PARAGRAPH)
+        self.assertIn("**bold**", blocks[0].text)
+        self.assertIn("_italic_", blocks[0].text)
+
+    def test_paragraph_with_link(self):
+        md = "Check out [Google](https://google.com) for more info."
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].block_type, BlockType.PARAGRAPH)
+        self.assertIn("[Google](https://google.com)", blocks[0].text)
+
+    def test_mixed_inline_in_code(self):
+        md = "```\nSome code with `inline` backticks inside\n```"
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].block_type, BlockType.CODE)
+        self.assertIn("`inline`", blocks[0].text)
+
+    def test_inline_quote_in_paragraph(self):
+        md = "He said, > 'This is inline quote style' in the paragraph."
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].block_type, BlockType.PARAGRAPH)
+        self.assertIn("> 'This is inline quote style'", blocks[0].text)
+
 
 class TestMarkdownToHTMLNode(unittest.TestCase):
     def test_all_types(self):
