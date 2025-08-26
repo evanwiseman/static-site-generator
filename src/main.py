@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 
 from generate import generate_pages_recursive
 
@@ -31,11 +32,15 @@ def copy_contents(source, destination):
         elif os.path.isdir(source_path):
             copy_contents(source_path, destination_path)
         
-def main():
+def main(args):
+    basepath = "/"
+    if len(args) > 1:
+        basepath = args[1]
+    
     remove_contents("public")
     copy_contents("static", "public")
-    generate_pages_recursive("content", "template.html", "public")
+    generate_pages_recursive("content", "template.html", "public", basepath)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
